@@ -1,0 +1,66 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+
+'DRH 1/23/2018
+'Hook # 17240, 17262, 17261, 16620
+'Hook # 17240: Shop Floor Control> File> Work Orders> New> BOM
+
+V.Local..BulkDeclareString(ssql, sTemp1, sTemp2, sTemp3)
+
+'GSS Connection
+F.ODBC.Connection!con.OpenConnection(v.Ambient.PDSN,v.Ambient.PUser,v.Ambient.PPass) 
+F.Intrinsic.Control.If(V.Caller.Hook, =, 17240)
+	'set hidden controls
+	V.Passed.GLOBAL.Set("")
+	Function.Intrinsic.Variable.SetProperty("GAB-TEXT-1", "PL", 34)
+	Function.Intrinsic.Variable.SetProperty("GAB-TEXT-1", "PT", 400)
+	Function.Intrinsic.Variable.SetProperty("GAB-TEXT-1", "PW", 420)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"HIDE",0)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"LOCK",0)	
+	Function.Intrinsic.Variable.SetProperty("GAB-TEXT-2", "PL", 34)
+	Function.Intrinsic.Variable.SetProperty("GAB-TEXT-2", "PT", 420)
+	Function.Intrinsic.Variable.SetProperty("GAB-TEXT-2", "PW", 420)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-2,"HIDE",0)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-2,"LOCK",0)
+	Function.Intrinsic.Variable.SetProperty("GAB-LBL-1", "PL", 34 )
+	Function.Intrinsic.Variable.SetProperty("GAB-LBL-1", "PT", 383)
+	Function.Intrinsic.Variable.SetProperty("GAB-LBL-1", "PW", 120)
+	V.Passed.GAB-LBL-1.Set("Addl Description:")
+F.Intrinsic.Control.ElseIf(V.Caller.Hook, =, 17262)
+	'set the global variable
+	F.Intrinsic.String.Build("{0} {1}", V.Passed.GAB-TEXT-1.Trim, V.Passed.GAB-TEXT-2.Trim, V.Local.sTemp1)
+	F.Intrinsic.String.Left(V.Local.sTemp1, 200, V.Passed.GLOBAL)
+	'V.Passed.GLOBAL.Set(V.Local.sTemp1)	
+F.Intrinsic.Control.ElseIf(V.Caller.Hook, =, 17261)
+	'update JOB_Header on JOB #
+	F.Intrinsic.String.Left(V.Passed.GLOBAL, 70, V.Local.sTemp1)
+	F.Intrinsic.String.Mid(V.Passed.GLOBAL, 71, 140,  V.Local.sTemp2)
+	F.Intrinsic.String.Mid(V.Passed.GLOBAL, 141, 200,  V.Local.sTemp3)
+	F.Intrinsic.String.Build("Update JOB_HEADER Set COMMENTS_1 = '{0}',  COMMENTS_2 = '{1}', COMMENTS_3 = '{2}' Where JOB = '{3}' ", V.Local.sTemp1.PSQLFriendly,  V.Local.sTemp2.PSQLFriendly, V.Local.sTemp3.PSQLFriendly, V.Passed.009000, V.Local.ssql)
+	F.ODBC.Connection!con.Execute(V.Local.ssql)
+F.Intrinsic.Control.ElseIf(V.Caller.Hook, =, 16620)
+	'reset global variable
+	V.Passed.GLOBAL.Set("")	
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4863_BOM_DESC.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$$}$12:00:00 AM$}$False
+Program.Sub.Comments.End
